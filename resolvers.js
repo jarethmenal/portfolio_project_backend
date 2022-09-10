@@ -1,13 +1,30 @@
 const Users = require('./models/user_schema')
+const authJWT = require('./util/authJWT')
+const bcrypt = require("bcrypt")
+const jwt = require('jsonwebtoken')
+const secret = process.env.ACCESS_TOKEN_SECRET;
 
 const resolvers = {
     Query: {
+        login: async (parent, { user }) => {
+            const dataUser = await Users.findOne({ email: user.email });
+
+            if (!dataUser) {
+                throw new Error('Email inserted does not match with any of our accounts.')
+            }
+            if (await bcrypt.compare(user.password, dataUser.password)) {
+                accessToken = jwt.sign(dataUser.toJSON(), secret, { expiresIn: "2m" })
+                return (`Bearer ${accessToken}`)
+            }
+
+        },
         getAllUsers: async () => {
             const response = await Users.find();
             return response;
         },
-        getSingleUser: async (parent, { id }) => {
-            const response = await Users.findById(id);
+        getSingleUser: async (parent, body, context) => {
+            const user = authJWT(context);
+            const response = await Users.findById(user._id);
             return response;
         }
     },

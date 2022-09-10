@@ -18,17 +18,23 @@ const typeDefs = gql`
         verified: Boolean
     }
 
-    type Query {
-        getAllUsers: [User]
-        getSingleUser(id: ID): User
+    input loginCredentials {
+        email: String!
+        password: String!
     }
-
     
     input userInput {
         name: String
         email: String
         password: String
         profpic: String 
+    }
+
+    type Query {
+        login(user: loginCredentials):String
+        getAllUsers: [User]
+        getSingleUser(id: ID): User
+        
     }
 
     type Mutation {

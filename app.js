@@ -14,7 +14,9 @@ module.exports = app;
 const start = async () => {
 
     const apolloServer = new ApolloServer({
-        typeDefs, resolvers
+        typeDefs,
+        resolvers,
+        context: ({ req }) => ({ req })
     })
 
     await apolloServer.start();
