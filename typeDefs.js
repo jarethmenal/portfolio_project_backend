@@ -31,16 +31,21 @@ const typeDefs = gql`
     }
 
     type Query {
-        login(user: loginCredentials):String
+        loginUser(user: loginCredentials):String
         getAllUsers: [User]
-        getSingleUser(id: ID): User
-        
+        getUser(id: ID): User
+        getUserExists(email: String): User
+        getImageCollection(filter: String):[String]
     }
 
     type Mutation {
         createUser(user: userInput):User
         deleteUser(id:ID!):String
         updateUser(id:ID!, user: userInput):User
+        sendRegisterCode(email:String, baseUrl:String): String
+        uploadImage(imageFile:String):String
+        replaceProfilePic(newImageFile:String):String
+        destroyImage(imageId:String):String
     }
 `
 module.exports = { typeDefs };

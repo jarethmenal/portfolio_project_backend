@@ -30,4 +30,4 @@ const userSchema = new Schema({
 },
     { collection: 'users' })
 
-module.exports = model('Users', userSchema)
+module.exports = model('users_schema', userSchema)
