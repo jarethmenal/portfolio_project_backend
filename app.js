@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express')
 const cors = require('cors')
-const { ApolloServer } = require('apollo-server-express')
+const { ApolloServer, AuthenticationError } = require('apollo-server-express')
 const { typeDefs } = require('./typeDefs')
 const { resolvers } = require('./resolvers')
 const { connectDB } = require('./db')
@@ -16,7 +16,10 @@ const start = async () => {
     const apolloServer = new ApolloServer({
         typeDefs,
         resolvers,
-        context: ({ req }) => ({ req })
+        context: ({ req }) => ({ req }),
+        formatError: (err) => {
+            return { code: err.extensions.code, message: err.message };
+        }
     })
 
     await apolloServer.start();

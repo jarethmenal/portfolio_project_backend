@@ -16,7 +16,7 @@ const userSchema = new Schema({
     },
     profpic: {
         type: String,
-        default: "noimage.png"
+        default: "portfolio_project1/no-found_of2sn3"
     },
     rank: {
         type: String,

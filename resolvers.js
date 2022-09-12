@@ -2,6 +2,7 @@ require('dotenv').config();
 const userSchema = require('./models/user_schema')
 const registrationSentSchema = require('./models/registration_sent_schema')
 const image_collection_schema = require('./models/image_collection_schema')
+const medicine_schema = require('./models/medicine_schema')
 const authJWT = require('./util/authJWT')
 const bcrypt = require("bcrypt")
 const jwt = require('jsonwebtoken')
@@ -19,36 +20,41 @@ const resolvers = {
                 throw new Error('Email inserted does not match with any of our accounts.')
             }
             if (await bcrypt.compare(user.password, dataUser.password)) {
-                accessToken = jwt.sign(dataUser.toJSON(), access, { expiresIn: "2m" })
+                accessToken = jwt.sign(dataUser.toJSON(), access, { expiresIn: "30m" })
                 return (`Bearer ${accessToken}`)
             }
             throw new Error(`Email and Password don't match.`)
 
         },
         getAllUsers: async () => {
-            const response = await userSchema.find();
-            return response;
+            return await userSchema.find();
         },
         getUser: async (parent, body, context) => {
-            const user = authJWT(context, access);
-            console.log(user)
-            const response = await userSchema.findById(user._id);
-            return response;
+            const user = await resolvers.Query.validateToken(null, { type: access }, context);
+            return await userSchema.findById(user._id);
         },
         getUserExists: async (parent, { email }) => {
             return await userSchema.findOne({ email });
         },
-        getImageCollection: async (parent, { filter }) => {
-            const response = await image_collection_schema.findOne({ name: filter });
-            return response;
+        getImageCollection: async (parent, { filter }, context) => {
+            await resolvers.Query.validateToken(null, { type: access }, context);
+            return await image_collection_schema.findOne({ name: filter });
         },
-        // checkAuthJWT: async () => {
-
-        // }
+        getAllMedicines: async (parent, body, context) => {
+            await resolvers.Query.validateToken(null, { type: access }, context);
+            return await medicine_schema.find();
+        },
+        getMedicine: async (parent, { filter }, context) => {
+            await resolvers.Query.validateToken(null, { type: access }, context);
+            return await medicine_schema.findOne({ name: filter });
+        },
+        validateToken: async (parent, { type }, context) => {
+            return await authJWT(context, type);
+        },
     },
 
     Mutation: {
-        sendRegisterCode: async (parent, { email, baseUrl }) => {
+        sendRegisterLink: async (parent, { email, baseUrl }) => {
             if (!validateMail.validate(email)) {
                 throw new Error('Email format is not valid, please use "emailname@company.ext".')
             }
@@ -61,7 +67,7 @@ const resolvers = {
                 throw new Error('This email has already been sent a registration link. If another code is needed, 5 minutes shall be waited.')
             }
             try {
-                const registerToken = jwt.sign({ email }, register, { expiresIn: "5m" });
+                const registerToken = jwt.sign({ email }, register, { expiresIn: "30m" });
                 const url = `${baseUrl}${registerToken}`;
                 const newRegisterSent = new registrationSentSchema({ email, url });
                 await newRegisterSent.save()
@@ -71,9 +77,13 @@ const resolvers = {
                 throw new Error(error)
             }
         },
-        createUser: async (parent, { user }, context, info) => {
-            const { name, email, password, profpic } = user;
-            const response = new userSchema({ name, email, password, profpic })
+        createUser: async (parent, { name, email, password, profpic }, context, info) => {
+            resolvers.Query.validateToken(null, { type: register }, context)
+            const newUser = { name, email, password };
+            if (profpic.trim() !== '') {
+                newUser.profpic = resolvers.Mutation.uploadImage(null, profpic)
+            }
+            const response = new userSchema(newUser)
             await response.save();
             return response;
         },
@@ -82,12 +92,12 @@ const resolvers = {
             return `User ${id} was deleted.`;
         },
         updateUser: async (parent, { id, user }) => {
-            const response = await userSchema.findByIdAndUpdate(id, {
+            return await userSchema.findByIdAndUpdate(id, {
                 $set: user
             }, { new: true });
-            return response;
         },
         uploadImage: async (parent, { imageFile }) => {
+
             try {
                 const uploadResponse = await cloudinary.uploader.upload(imageFile, {
                     upload_preset: 'portfolio_project1'
@@ -97,7 +107,8 @@ const resolvers = {
                 throw new Error(error)
             }
         },
-        destroyImage: async (parent, imageId) => {
+        destroyImage: async (parent, imageId, context) => {
+            await resolvers.Query.validateToken(null, { type: access }, context);
             const result = await cloudinary.uploader.destroy(imageId);
             if (result.result === 'not found') {
                 throw new Error('Image requested for deletion has not been found.')
