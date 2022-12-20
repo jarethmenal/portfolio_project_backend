@@ -38,6 +38,7 @@ const typeDefs = gql`
         email: String
         password: String
         profpic: String 
+        confirmPassword: String
     }
 
     type Query {
@@ -45,17 +46,21 @@ const typeDefs = gql`
         getAllUsers: [User]
         getUser: User
         getUserExists(email: String!): User
-        getImageCollection(filter: String):[String]
+        getImageCollection(filter: String, where: String):[String]
         getAllMedicines:[Medicine]
         getMedicine(filter: String): Medicine
         validateToken: String
+        getEmailRegister: String
+        getEmailRecovery: String
     }
 
     type Mutation {
         createUser(user: userInput!):User
         deleteUser(id:ID!):String
-        updateUser(id:ID!, user: userInput!):User
+        deleteRegisterLink(email:String):String
+        updatePassword(email:String!, newPassword:String!, confirmPassword:String!, location:String!):User
         sendRegisterLink(email:String!, baseUrl:String!): String
+        sendRecoveryLink(email:String!, baseUrl:String!): String
         uploadImage(imageFile:String!):String
         replaceProfilePic(newImageFile:String!):String
         destroyImage(imageId:String!):String

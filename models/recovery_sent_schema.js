@@ -1,6 +1,6 @@
 const { Schema, model } = require('mongoose');
 
-const registrationSentSchema = new Schema({
+const recoverySentSchema = new Schema({
     email: {
         type: String,
     },
@@ -9,7 +9,7 @@ const registrationSentSchema = new Schema({
     },
 }, { timestamps: true });
 
-registrationSentSchema.index({ createdAt: 1 }, { expireAfterSeconds: 3600 })
+recoverySentSchema.index({ createdAt: 1 }, { expireAfterSeconds: 3600 })
 // { collection: 'temporal_register' }
-module.exports = model('registration_sent_schema', registrationSentSchema)
+module.exports = model('recovery_sent_schema', recoverySentSchema)
 

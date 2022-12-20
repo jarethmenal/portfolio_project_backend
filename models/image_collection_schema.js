@@ -4,7 +4,7 @@ const imageCollectionSchema = new Schema({
     name: {
         type: String
     },
-    cart: {
+    list: {
         type: [String],
         default: []
     }
