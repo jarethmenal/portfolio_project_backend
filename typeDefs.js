@@ -46,11 +46,11 @@ const typeDefs = gql`
         getAllUsers: [User]
         getUser: User
         getUserExists(email: String!): User
-        getImageCollection(filter: String, where: String):[String]
+        getImageCollection(filter: String!):[String]
         getAllMedicines:[Medicine]
         getMedicine(filter: String): Medicine
         validateToken: String
-        getEmailRegister: String
+        getEmailRegister: String   
         getEmailRecovery: String
     }
 
@@ -58,12 +58,13 @@ const typeDefs = gql`
         createUser(user: userInput!):User
         deleteUser(id:ID!):String
         deleteRegisterLink(email:String):String
-        updatePassword(email:String!, newPassword:String!, confirmPassword:String!, location:String!):User
+        updatePassword(email:String!, newPassword:String!, confirmPassword:String!, location:String!):String
         sendRegisterLink(email:String!, baseUrl:String!): String
         sendRecoveryLink(email:String!, baseUrl:String!): String
         uploadImage(imageFile:String!):String
         replaceProfilePic(newImageFile:String!):String
         destroyImage(imageId:String!):String
-    }
+        updateUser(id:String, user:userInput):User
+        }
 `
 module.exports = { typeDefs };

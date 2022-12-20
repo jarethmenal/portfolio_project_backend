@@ -18,6 +18,8 @@ const resolvers = {
     Query: {
         loginUser: async (parent, { user }) => {
             const { email, password } = user;
+
+            console.log(email, password)
             if (!email) {
                 throw new Error(`Please insert your email's account.`)
             }
@@ -25,6 +27,7 @@ const resolvers = {
                 throw new Error(`Please insert your account's password.`)
             }
             const dataUser = await resolvers.Query.getUserExists([], { email: email });
+            console.log(dataUser)
             if (!dataUser) {
                 throw new Error('Email inserted does not match with any of our accounts.')
             }
@@ -45,9 +48,9 @@ const resolvers = {
         getUserExists: async (parent, { email }) => {
             return await userSchema.findOne({ email });
         },
-        getImageCollection: async (parent, { filter, where }, context) => {
-            await resolvers.Query.validateToken(null, { type: (where === 'register' ? register : access) }, context);
+        getImageCollection: async (parent, { filter }, context) => {
             const { list } = await image_collection_schema.findOne({ name: filter });
+            console.log(list)
             return list;
         },
         getAllMedicines: async (parent, body, context) => {
@@ -158,7 +161,7 @@ const resolvers = {
             resolvers.Query.validateToken(null, { type: register }, context)
 
             const hashedPassword = await bcrypt.hash(password, 10);
-            const newUser = { name, email, hashedPassword };
+            const newUser = { name, email, password: hashedPassword };
 
             if (profpic !== null) {
                 newUser.profpic = await resolvers.Mutation.uploadImage(null, profpic)
@@ -179,12 +182,20 @@ const resolvers = {
         updatePassword: async (parent, { email, newPassword, confirmPassword, location }, context) => {
             const locationType = location === 'recover' ? recover : access;
             await resolvers.Query.validateToken(null, { type: locationType }, context);
+            if (newPassword.trim() === '' || confirmPassword.trim() === '') {
+                throw new Error('Please do not leave any whitespaces in the form.')
+            }
             if (confirmPassword !== newPassword) { throw new Error('Please make sure that both passwords are the same.') }
             const hashedPassword = await bcrypt.hash(newPassword, 10);
-            return await userSchema.findOneAndUpdate({ email: email }, { password: hashedPassword });
-            // return await userSchema.findByIdAndUpdate(id, {
-            //     $set: user
-            // }, { new: true });
+            await userSchema.findOneAndUpdate({ email: email }, { password: hashedPassword });
+            await recoverySentSchema.findOneAndDelete({ email: email });
+
+        },
+
+        updateUser: async (_, { id, user }) => {
+            return await userSchema.findByIdAndUpdate(id, {
+                $set: user
+            }, { new: true });
         },
         uploadImage: async (parent, imageFile) => {
             try {
